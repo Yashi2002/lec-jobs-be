@@ -29,6 +29,16 @@ const userSchema = new mongoose.Schema({
   followings: [{ type: String }],
 });
 
+const User = mongoose.model("user", userSchema);
+
+User.createCollection()
+  .then((col) => {
+    console.log("Collection", col, "created");
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+
 const postsSchema = new mongoose.Schema({
   title: String,
   description: String,
@@ -46,33 +56,7 @@ const postsSchema = new mongoose.Schema({
   comments: [{ type: String }],
 });
 
-const User = mongoose.model("User", userSchema);
-
-User.createCollection()
-  .then((col) => {
-    console.log("Collection", col, "created");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
-
-User.create({
-  email: "test@gmail.com",
-  username: "yasi",
-  fullname: "Yasmini Gyawali",
-  title: "Software Developer",
-  skills: ["JS", "PHP", "Java"],
-  address: "Kathmandu Nepal",
-  job_type: "Full Time",
-  id: 1,
-  is_active: true,
-  followers: ["username123", "user123", "user543"],
-  followings: ["username123", "user123", "user543", "user55"],
-}).then(() => {
-  console.log("User Created");
-});
-
-const Post = mongoose.model("Post", userSchema);
+const Post = mongoose.model("posts", userSchema);
 
 Post.createCollection()
   .then((col) => {
@@ -82,24 +66,24 @@ Post.createCollection()
     console.log(err);
   });
 
-Post.create({
-  title: "PHP Developer Required",
-  description: "For a client project PHP Developer is required",
-  location: "Kathmandu",
-  job_type: "Full Time",
-  pay_rate_per_hr_dollar: 10.0,
-  skills: ["PHP", "JS", "HTML"],
-  liked_by: ["test111", "test1", "test123"],
-  viewed_by: ["test111", "test1", "test123"],
-  id: 2,
-  user_id: 1,
-  post_by_username: "s1",
-  post_by_fullname: "Test User",
-  post_date: "2023-06-10T09:24:07.659034",
-  comments: [],
-}).then(() => {
-  console.log("Post Created");
-});
+// Post.create({
+//   title: "PHP Developer Required",
+//   description: "For a client project PHP Developer is required",
+//   location: "Kathmandu",
+//   job_type: "Full Time",
+//   pay_rate_per_hr_dollar: 10.0,
+//   skills: ["PHP", "JS", "HTML"],
+//   liked_by: ["test111", "test1", "test123"],
+//   viewed_by: ["test111", "test1", "test123"],
+//   id: 2,
+//   user_id: 1,
+//   post_by_username: "s1",
+//   post_by_fullname: "Test User",
+//   post_date: "2023-06-10T09:24:07.659034",
+//   comments: [],
+// }).then(() => {
+//   console.log("Post Created");
+// });
 
 app.get("/", (req, res) => {
   res.status(200).send("This is response from BE");
@@ -110,9 +94,36 @@ app.get("/api/v1/posts", (req, res) => {
   res.status(200).send(posts);
 });
 
-app.get("/api/v1/user", (req, res) => {
-  const user = fs.readFileSync("./data/user.json", "utf-8").toString();
-  res.status(200).send(user);
+app.get("/api/v1/user", async (req, res) => {
+  const user = await User.find({id : 1});
+  // const user = fs.readFileSync("./data/user.json", "utf-8").toString();
+  res.status(200).send(user[0]);
+});
+
+app.post("/api/v1/user", async (req, res) => {
+  const lastUser = await User.findOne({}, null, { sort: { id: -1 } });
+
+  let id = 1;
+  if (lastUser) {
+    id = lastUser.id + 1;
+  }
+  const newUser ={
+    email: "test@gmail.com",
+    username: "yasi",
+    fullname: "Yasmini Gyawali",
+    title: "Software Developer",
+    skills: ["JS", "PHP", "Java"],
+    address: "Kathmandu Nepal",
+    job_type: "Full Time",
+    id: id,
+    is_active: true,
+    followers: [],
+    followings: [],
+};
+  User.create(newUser).then((createdUser) => {
+    console.log("User Created");
+    response.status(200).send(createdUser);
+  });
 });
 
 app.listen(PORT, () => {
