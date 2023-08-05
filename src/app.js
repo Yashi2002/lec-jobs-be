@@ -3,8 +3,11 @@ const fs = require("fs");
 const app = express();
 const cors = require("cors");
 const mongoose = require("mongoose");
+const { type } =require("os");
+const bodyParser = require("body-parser");
 
 app.use(cors()); //middleware
+app.use(bodyParser.json());
 
 const PORT = 5000;
 
@@ -18,6 +21,7 @@ mongoose.connect(mongoDbURI, {
 const userSchema = new mongoose.Schema({
   email: String,
   username: String,
+  password : String,
   fullname: String,
   title: String,
   skills: [{ type: String }],
@@ -30,14 +34,6 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model("user", userSchema);
-
-User.createCollection()
-  .then((col) => {
-    console.log("Collection", col, "created");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
 
 const postsSchema = new mongoose.Schema({
   title: String,
@@ -57,14 +53,6 @@ const postsSchema = new mongoose.Schema({
 });
 
 const Post = mongoose.model("posts", userSchema);
-
-Post.createCollection()
-  .then((col) => {
-    console.log("Collection", col, "created");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
 
 // Post.create({
 //   title: "PHP Developer Required",
@@ -103,26 +91,28 @@ app.get("/api/v1/user", async (req, res) => {
 app.post("/api/v1/user", async (req, res) => {
   const lastUser = await User.findOne({}, null, { sort: { id: -1 } });
 
+  const {username, email, fullname, title, job_type, skills, address, password} = req.body;
   let id = 1;
   if (lastUser) {
     id = lastUser.id + 1;
   }
   const newUser ={
-    email: "test@gmail.com",
-    username: "yasi",
-    fullname: "Yasmini Gyawali",
-    title: "Software Developer",
-    skills: ["JS", "PHP", "Java"],
-    address: "Kathmandu Nepal",
-    job_type: "Full Time",
-    id: id,
+    email,
+    username,
+    fullname,
+    title,
+    skills,
+    address,
+    job_type,
+    id,
+    password,
     is_active: true,
     followers: [],
     followings: [],
 };
   User.create(newUser).then((createdUser) => {
     console.log("User Created");
-    response.status(200).send(createdUser);
+    res.status(200).send(createdUser);
   });
 });
 
